@@ -49,7 +49,7 @@ pub struct UpdatePlayerPosOnWASD;
 
 pub struct UpdatePlayerPosArgs<'ppos, 'vecs> {
     pub player_pos: &'ppos mut PlayerPos,
-    pub player_vecs: &'vecs PlayerVecs,
+    pub player_vecs: &'vecs FrontRightUpVecs,
 }
 
 impl<'ppos, 'vecs> System<UpdatePlayerPosArgs<'ppos, 'vecs>> for UpdatePlayerPosOnWASD {
@@ -59,7 +59,7 @@ impl<'ppos, 'vecs> System<UpdatePlayerPosArgs<'ppos, 'vecs>> for UpdatePlayerPos
             player_pos, player_vecs
         } = arg;
 
-        let PlayerVecs { front, right, .. } = *player_vecs;
+        let FrontRightUpVecs { front, right, .. } = *player_vecs;
 
         if is_key_down(KeyCode::W) {
             player_pos.0 += front * MOVE_SPEED;
@@ -82,7 +82,7 @@ impl<'ppos, 'vecs> System<UpdatePlayerPosArgs<'ppos, 'vecs>> for UpdatePlayerPos
 pub struct UpdateVecsAfterYawPitch;
 
 pub struct UpdateVecsArgs<'vecs, 'yp> {
-    pub player_vecs: &'vecs mut PlayerVecs,
+    pub player_vecs: &'vecs mut FrontRightUpVecs,
     pub yaw_pitch: &'yp YawPitch,
 }
 
@@ -102,7 +102,7 @@ impl<'vecs, 'yp> System<UpdateVecsArgs<'vecs, 'yp>> for UpdateVecsAfterYawPitch 
         let right = front.cross(UP).normalize();
         let up = right.cross(front).normalize();
 
-        *player_vecs = PlayerVecs { front, right, up };
+        *player_vecs = FrontRightUpVecs { front, right, up };
     }
 }
 
@@ -115,13 +115,13 @@ pub struct MousePos(pub Vec2);
 
 
 #[derive(Debug, Clone)]
-pub struct PlayerVecs {
+pub struct FrontRightUpVecs {
     pub front: Vec3,
     pub right: Vec3,
     pub up: Vec3,
 }
 
-impl PlayerVecs {
+impl FrontRightUpVecs {
 
     pub fn new(yaw_pitch: &YawPitch) -> Self {
 

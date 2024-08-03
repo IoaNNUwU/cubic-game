@@ -27,7 +27,7 @@ async fn main() {
     atlas.set_filter(FilterMode::Nearest);
 
     let mut yaw_pitch = YawPitch::default();
-    let mut player_vecs = PlayerVecs::new(&yaw_pitch);
+    let mut front_right_up = FrontRightUpVecs::new(&yaw_pitch);
 
     let mut player_pos = PlayerPos(vec3(10., 10., 10.));
 
@@ -56,11 +56,11 @@ async fn main() {
             UpdateYawPitch.update(update_yaw_pitch_args);
 
             UpdatePlayerPosOnWASD.update(UpdatePlayerPosArgs {
-                player_pos: &mut player_pos, player_vecs: &player_vecs,
+                player_pos: &mut player_pos, player_vecs: &front_right_up,
             });
 
             UpdateVecsAfterYawPitch.update(UpdateVecsArgs { 
-                player_vecs: &mut player_vecs, 
+                player_vecs: &mut front_right_up, 
                 yaw_pitch: &yaw_pitch,
             });
         }
@@ -74,8 +74,8 @@ async fn main() {
 
         set_camera(&Camera3D {
             position: *player_pos,
-            up: player_vecs.up,
-            target: *player_pos + player_vecs.front,
+            up: front_right_up.up,
+            target: *player_pos + front_right_up.front,
             ..Default::default()
         });
 
