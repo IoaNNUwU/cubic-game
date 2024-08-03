@@ -152,7 +152,8 @@ impl BuildChunkMesh for Chunk {
     }
 }
 
-#[derive(derive_more::Deref, Clone, Copy)]
+#[derive(derive_more::Deref)]
+#[derive(Clone, Copy)]
 struct UvTexture(Vec2);
 
 impl UvTexture {

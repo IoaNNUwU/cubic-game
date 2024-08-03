@@ -1,14 +1,10 @@
 pub mod grab;
-pub mod yawpitch;
-pub mod mouse;
+pub mod player;
 
-// Система
-// 1 - состояние
-// 2 - код инициализации состояния
-// 3 - код обновления состояния - loop
+/// Система
+/// 1 - состояние (T)
+/// 2 - код инициализации состояния (fn new)
+/// 3 - код обновления состояния (fn update) - loop 
 pub trait System<T> {
-
-    fn init() -> Self;
-
-    fn update(&self, state: T);
+    fn update(&self, args: T);
 }

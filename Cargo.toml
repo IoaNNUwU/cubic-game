@@ -6,4 +6,3 @@ edition = "2021"
 [dependencies]
 derive_more = "0.99.18"
 macroquad = "0.4.11"
-const-array-init = "1.0.0"

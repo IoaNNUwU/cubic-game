@@ -1,6 +1,4 @@
-use std::{f32::consts::PI, ops::Deref};
-
-use macroquad::{math, models::Vertex, prelude::*};
+use macroquad::prelude::*;
 
 mod systems;
 
@@ -9,16 +7,13 @@ mod world;
 use world::chunk_mesh::*;
 use world::*;
 
-use systems::mouse::*;
-use systems::yawpitch::*;
+use systems::player::*;
 use systems::{grab::*, System};
 use world::BlockState;
 
-const MOVE_SPEED: f32 = 0.1;
-
 fn conf() -> Conf {
     Conf {
-        window_title: String::from("Macroquad"),
+        window_title: String::from("CubicGame"),
         window_width: 1260,
         window_height: 768,
         fullscreen: false,
@@ -31,83 +26,45 @@ async fn main() {
     let atlas: Texture2D = load_texture("assets/atlas.png").await.unwrap();
     atlas.set_filter(FilterMode::Nearest);
 
-    let mut x = 0.0;
-    let mut switch = false;
-    let bounds = 8.0;
+    let mut yaw_pitch = YawPitch::default();
+    let mut player_vecs = PlayerVecs::new(&yaw_pitch);
 
-    let world_up = vec3(0.0, 1.0, 0.0);
+    let mut player_pos = PlayerPos(vec3(10., 10., 10.));
 
-    let mut yaw_pitch = YawPitch {
-        yaw: 1.18,
-        pitch: 0.0,
-    };
-
-    let mut front = vec3(
-        yaw_pitch.yaw.cos() * yaw_pitch.pitch.cos(),
-        yaw_pitch.pitch.sin(),
-        yaw_pitch.yaw.sin() * yaw_pitch.pitch.cos(),
-    )
-    .normalize();
-
-    let mut right = front.cross(world_up).normalize();
-    let mut up = right.cross(front).normalize();
-
-    let mut position = vec3(0.0, 1.0, 0.0);
     let mut last_mouse_position: Vec2 = mouse_position().into();
 
-    let tab_press = TabPressSystem::init();
-    let mut grab = GrabbedState(true);
 
-    let update_yaw_pitch = UpdateYawPitch::init();
+    let update_grabbed_on_tab = TabPressSystem::new();
+    let mut grabbed_state = GrabbedState::default();
 
     loop {
-        if is_key_pressed(KeyCode::Escape) {
-            break;
-        }
+        if is_key_pressed(KeyCode::Escape) { break; }
 
-        tab_press.update(&mut grab);
-
-        if is_key_down(KeyCode::W) {
-            position += front * MOVE_SPEED;
-        }
-        if is_key_down(KeyCode::S) {
-            position -= front * MOVE_SPEED;
-        }
-        if is_key_down(KeyCode::A) {
-            position -= right * MOVE_SPEED;
-        }
-        if is_key_down(KeyCode::D) {
-            position += right * MOVE_SPEED;
-        }
+        update_grabbed_on_tab.update(&mut grabbed_state);
 
         let mouse_position: Vec2 = mouse_position().into();
 
-        let yaw_pitch_state = YawPitchState {
+        let update_yaw_pitch_args = UpdateYawPitchArgs {
             yaw_pitch: &mut yaw_pitch,
             mouse_pos: MousePos(mouse_position),
             last_mouse_pos: LastMousePos(last_mouse_position),
         };
-
         last_mouse_position = mouse_position;
 
-        if grab.0 {
-            update_yaw_pitch.update(yaw_pitch_state);
+        if grabbed_state.0 {
 
-            front = vec3(
-                yaw_pitch.yaw.cos() * yaw_pitch.pitch.cos(),
-                yaw_pitch.pitch.sin(),
-                yaw_pitch.yaw.sin() * yaw_pitch.pitch.cos(),
-            )
-            .normalize();
+            UpdateYawPitch.update(update_yaw_pitch_args);
 
-            right = front.cross(world_up).normalize();
-            up = right.cross(front).normalize();
+            UpdatePlayerPosOnWASD.update(UpdatePlayerPosArgs {
+                player_pos: &mut player_pos, player_vecs: &player_vecs,
+            });
 
-            x += if switch { 0.04 } else { -0.04 };
-            if x >= bounds || x <= -bounds {
-                switch = !switch;
-            }
+            UpdateVecsAfterYawPitch.update(UpdateVecsArgs { 
+                player_vecs: &mut player_vecs, 
+                yaw_pitch: &yaw_pitch,
+            });
         }
+
         clear_background(Color {
             r: 0.3,
             g: 0.3,
@@ -116,9 +73,9 @@ async fn main() {
         });
 
         set_camera(&Camera3D {
-            position: position,
-            up: up,
-            target: position + front,
+            position: *player_pos,
+            up: player_vecs.up,
+            target: *player_pos + player_vecs.front,
             ..Default::default()
         });
 
@@ -161,7 +118,7 @@ async fn main() {
         draw_text(
             format!(
                 "X: {:.2} Y: {:.2} Z: {:.2}",
-                position.x, position.y, position.z
+                player_pos.x, player_pos.y, player_pos.z
             )
             .as_str(),
             10.0,
