@@ -3,3 +3,5 @@
 Игра по типу майнкрафта, которую мы разрабатываем на стримах
 
 > https://www.youtube.com/@bitwiseuwu
+---
+![preview](assets/Screenshot.png)
