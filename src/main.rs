@@ -1,10 +1,15 @@
+#![feature(const_fn_floating_point_arithmetic)]
+
+use std::io::Read;
+use std::net::TcpListener;
+
 use macroquad::prelude::*;
 
 mod systems;
 
 mod world;
 
-use world::chunk_mesh::*;
+use world::render::*;
 use world::*;
 
 use systems::player::*;
@@ -37,6 +42,21 @@ async fn main() {
     let update_grabbed_on_tab = TabPressSystem::new();
     let mut grabbed_state = GrabbedState::default();
 
+    let mut chunk = Chunk::EMPTY;
+
+    for x in 0..16 {
+        for z in 0..16 {
+            for y in 0..=3 {
+                let rand = rand::gen_range(0, 5);
+                match rand {
+                    0 | 1 => *chunk.get_mut(x, y, z) = BlockState::DIRT,
+                    2 | 3 => *chunk.get_mut(x, y, z) = BlockState::STONE,
+                    _ => *chunk.get_mut(x, y, z) = BlockState::SAND,
+                }
+            }
+        }
+    }
+    
     loop {
         if is_key_pressed(KeyCode::Escape) { break; }
 
@@ -81,34 +101,22 @@ async fn main() {
 
         draw_grid(20, 1., BLACK, GRAY);
 
-        let chunk: Chunk = Chunk::from_fn(|x, y, z| {
-            if y < 3 {
-                BlockState::STONE
-            }
-            else if y == 4 {
-                BlockState::GRASS
-            }
-            else {
-                BlockState::AIR
-            }
-        });
+        let mut chunk_meshes: Vec<Mesh> = vec![];
 
-        let conn: Connected<Chunk> = Connected { 
-            up: &Chunk::EMPTY,
-            bo: &Chunk::EMPTY, 
-            px: &Chunk::EMPTY, 
-            pz: &Chunk::EMPTY, 
-            nz: &Chunk::EMPTY, 
-            nx: &Chunk::EMPTY, 
-        };
+        for ch_x in -16..16 {
+            for ch_z in -16..16 {
+                let chunk_pos = ChunkPos { x: ch_x, y: 0, z: ch_z };
 
-        let mesh = chunk.build_chunk_mesh(
-            ChunkPos { x: 0, y: 0, z: 0 }, 
-            atlas.clone(), 
-            &conn
-        );
+                let chunk_model = build_chunk_model(
+                    player_pos.0, front_right_up.front, chunk_pos, &chunk, &ConnectedChunks::EMPTY
+                );
+                chunk_meshes.extend(build_chunk_meshes(chunk_pos, chunk_model.clone(), Some(atlas.clone())))
+            }
+        }
 
-        draw_mesh(&mesh);
+        for chunk_mesh in &chunk_meshes {
+            draw_mesh(&chunk_mesh);
+        }
 
         // Back to screen space, render some text
 
@@ -139,3 +147,5 @@ async fn main() {
         next_frame().await
     }
 }
+
+struct World([[[Chunk; 16]; 16]; 16]);

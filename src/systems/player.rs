@@ -61,20 +61,33 @@ impl<'ppos, 'vecs> System<UpdatePlayerPosArgs<'ppos, 'vecs>> for UpdatePlayerPos
 
         let FrontRightUpVecs { front, right, .. } = *player_vecs;
 
+        fn transform(mut vec: Vec3) -> Vec3 {
+            vec.y = 0.;
+            vec.normalize()
+        }
+
+        let mut velocity: Vec3 = Vec3::ZERO;
+
         if is_key_down(KeyCode::W) {
-            player_pos.0 += front * MOVE_SPEED;
+            velocity += transform(front);
         }
         if is_key_down(KeyCode::S) {
-            player_pos.0 -= front * MOVE_SPEED;
+            velocity -= transform(front);
         }
         if is_key_down(KeyCode::A) {
-            player_pos.0 -= right * MOVE_SPEED;
+            velocity -= transform(right);
         }
         if is_key_down(KeyCode::D) {
-            player_pos.0 += right * MOVE_SPEED;
+            velocity += transform(right);
+        }
+        if is_key_down(KeyCode::Space) {
+            velocity += UP;
+        }
+        if is_key_down(KeyCode::LeftShift) {
+            velocity -= UP;
         }
 
-
+        player_pos.0 += if velocity != Vec3::ZERO { velocity.normalize() * MOVE_SPEED } else { Vec3::ZERO };
     }
 }
 
