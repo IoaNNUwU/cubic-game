@@ -162,8 +162,10 @@ impl Default for UvTexture {
 
 use macroquad::models::Vertex;
 
+const WHITE: [u8; 4] = [u8::MAX, u8::MAX, u8::MAX, u8::MAX];
+
 const fn vertex(pos: Vec3, uv: Vec2) -> Vertex {
-    Vertex { position: pos, uv, color: WHITE }
+    Vertex { normal: Vec4::ONE, position: pos, uv, color: WHITE }
 }
 
 #[derive(Debug, Clone, Copy)]

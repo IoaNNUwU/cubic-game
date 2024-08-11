@@ -19,9 +19,10 @@ use world::BlockState;
 fn conf() -> Conf {
     Conf {
         window_title: String::from("CubicGame"),
-        window_width: 1260,
-        window_height: 768,
-        fullscreen: false,
+        platform: miniquad::conf::Platform {
+            swap_interval: Some(0),
+            ..Default::default()
+        },
         ..Default::default()
     }
 }
@@ -147,5 +148,3 @@ async fn main() {
         next_frame().await
     }
 }
-
-struct World([[[Chunk; 16]; 16]; 16]);
