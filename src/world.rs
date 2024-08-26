@@ -78,6 +78,7 @@ impl Chunk {
     pub fn get(&self, x: usize, y: usize, z: usize) -> &BlockState {
         self.blocks[y].get(x, z)
     }
+    
     pub fn get_mut(&mut self, x: usize, y: usize, z: usize) -> &mut BlockState {
         self.blocks[y].get_mut(x, z)
     }

@@ -1,26 +1,27 @@
 use super::*;
 
+#[rustfmt::skip]
 pub fn build_chunk_model(
     player_pos: Vec3, player_front: Vec3, chunk_pos: ChunkPos, 
     chunk: &Chunk, conn: &ConnectedChunks
-
 ) -> ChunkModel {
-    
-    let chunk_plus_connected = ChunkPlusConnected { chunk, conn };
+
+    let ConnectedChunks { top, bottom, px, nx, pz, nz } = conn;
+    let chunk_plus_connected = ChunkPlusConnected { chunk, top, bottom, px, nx, pz, nz };
 
     let chunk_pos: BlockPos = chunk_pos.into();
 
     let ch_pos: Vec3 = vec3(
-        chunk_pos.x as f32 + CHUNK_SIZE_16 as f32 / 2., 
-        chunk_pos.y as f32 + CHUNK_SIZE_16 as f32 / 2., 
-        chunk_pos.z as f32 + CHUNK_SIZE_16 as f32 / 2.,
+        chunk_pos.x as f32 + CHUNK_SIZE_16 as f32 / 2.0,
+        chunk_pos.y as f32 + CHUNK_SIZE_16 as f32 / 2.0,
+        chunk_pos.z as f32 + CHUNK_SIZE_16 as f32 / 2.0,
     );
 
-    let chunk_view_vec = ch_pos - player_pos;
+    let chunk_view_vec: Vec3 = ch_pos - player_pos;
 
-    let angle = player_front.angle_between(chunk_view_vec);
+    let angle: f32 = player_front.angle_between(chunk_view_vec);
 
-    let distance = player_pos.distance(ch_pos);
+    let distance: f32 = player_pos.distance(ch_pos);
 
     if (angle > 65f32.to_radians()) && distance > 2. * CHUNK_SIZE_16 as f32 {
         return ChunkModel::EMPTY;
