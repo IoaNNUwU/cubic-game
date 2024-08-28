@@ -35,20 +35,15 @@ pub async fn run_client() {
 
     let mut grabbed = Grabbed::default();
 
-    let mut chunk = Chunk::EMPTY;
+    let mut chunk_models: Vec<(ChunkPos, ChunkModel)> = Vec::with_capacity(100);
 
-    for x in 0..16 {
-        for z in 0..16 {
-            for y in 0..=3 {
-                let rand = rand::gen_range(0, 5);
-                match rand {
-                    0 | 1 => *chunk.get_mut(x, y, z) = BlockState::DIRT,
-                    2 | 3 => *chunk.get_mut(x, y, z) = BlockState::STONE,
-                    _ => *chunk.get_mut(x, y, z) = BlockState::SAND,
-                }
-            }
+    for x in -20..20 {
+        for z in -20..20 {
+            chunk_models.push((ChunkPos::new(x, 0, z), make_model(UvTexture::SAND)));
         }
     }
+
+    let chunk_meshes: Vec<_> = build_chunk_meshes(chunk_models, Some(atlas.clone())).collect();
 
     setup_mouse_cursor();
     
@@ -74,22 +69,6 @@ pub async fn run_client() {
             ..Default::default()
         });
 
-        draw_grid(20, 1., BLACK, GRAY);
-
-        let mut chunk_models: Vec<(ChunkPos, ChunkModel)> = Vec::with_capacity(100);
-
-        for ch_x in -2..2 {
-            let chunk_pos = ChunkPos { x: ch_x, y: 0, z: 0 };
-
-            let chunk_model = build_chunk_model(
-                player_pos.0, *front, chunk_pos, &chunk, &ConnectedChunks::EMPTY
-            );
-
-            chunk_models.push((chunk_pos, chunk_model));
-        }
-
-        let chunk_meshes: Vec<_> = build_chunk_meshes(chunk_models, Some(atlas.clone())).collect();
-
         for chunk_mesh in &chunk_meshes {
             draw_mesh(&chunk_mesh);
         }
@@ -105,22 +84,31 @@ pub async fn run_client() {
     }
 }
 
+fn make_model(tex: UvTexture) -> ChunkModel {
+    let mut model = ChunkModel::EMPTY;
+    for x in 0..16 {
+        for z in 0..16 {
+            model.set(x, 3, z, BlockModel::Top(tex))
+        }
+    }
+    model
+}
+
 fn print_n_meshes(chunk_meshes: &Vec<Mesh>) {
-    let len = chunk_meshes.len();
     let y = 40.0 + 40.0 * 2.0;
     for (n, mesh) in chunk_meshes.into_iter().enumerate() {
         draw_text(
-            format!("N Meshes: {}, IND: {:?}", len, mesh.indices).as_str(),
+            format!("Mesh#{}, IND ({})", n, mesh.indices.len()).as_str(),
             10.0,
             y + 40.0 * n as f32,
-            60.0,
+            20.0,
             BLACK,
         );
         draw_text(
-            format!("VERT: {:?}", mesh.vertices.iter().map(|v| v.position).collect::<Vec<_>>()).as_str(),
+            format!("VERT ({})", mesh.vertices.len()).as_str(),
             10.0,
-            40.0 + y + 40.0 * n as f32,
-            60.0,
+            20.0 + y + 40.0 * n as f32,
+            20.0,
             BLACK,
         );
     }

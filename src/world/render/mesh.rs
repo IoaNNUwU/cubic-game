@@ -2,8 +2,8 @@ use macroquad::prelude::*;
 
 use super::*;
 
-const VERT_CAP_10_000: usize = 10_000;
-const IND_CAP_15_000: usize = 15_000;
+const VERT_CAP: usize = 833 * 4;
+const IND_CAP: usize = 833 * 6;
 
 pub struct Meshes {
     vertices: Vec<Vertex>,
@@ -45,30 +45,26 @@ impl Meshes {
 
     #[rustfmt::skip]
     pub fn into_iter(self) -> impl Iterator<Item = Mesh> {
-        let Meshes { mut vertices, mut indices, texture } = self;
+        let Meshes { vertices, indices, texture } = self;
 
-        let mut meshes: Vec<Mesh> = Vec::with_capacity(vertices.len() / VERT_CAP_10_000);
+        let mut meshes: Vec<Mesh> = Vec::with_capacity(vertices.len() / VERT_CAP);
 
-        while vertices.len() != 0 {
+        let ind = indices.chunks(IND_CAP);
+        let mut vert = vertices.chunks(VERT_CAP);
 
-            let remaining_ver = if vertices.len() > VERT_CAP_10_000 { 
-                vertices.split_off(VERT_CAP_10_000)
-            }
-            else { vec![] };
+        const N_IND_IN_FULL_MESH: usize = 3_332;
 
-            let remaining_ind = if vertices.len() > IND_CAP_15_000 { 
-                indices.split_off(IND_CAP_15_000)
-            }
-            else { vec![] };
-
-            meshes.push(Mesh {
-                vertices,
-                indices,
+        for (i, meshes_ind) in ind.enumerate() {
+            meshes.push(Mesh { 
+                vertices: Vec::from(vert.next().unwrap()), 
+                indices: Vec::from_iter(meshes_ind.iter().map(|ind| ind - (i * N_IND_IN_FULL_MESH) as u16)), 
                 texture: texture.clone(),
             });
+        }
 
-            vertices = remaining_ver;
-            indices = remaining_ind;
+        for (n, mesh) in meshes.iter().enumerate() {
+            assert!(mesh.indices.len() <= IND_CAP, "Mesh #{} has {} IND", n, mesh.indices.len());
+            assert!(mesh.vertices.len() <= VERT_CAP, "Mesh #{} has {} VERT", n, mesh.indices.len());
         }
 
         meshes.into_iter()

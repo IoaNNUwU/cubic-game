@@ -2,7 +2,7 @@ use derive_more::{Deref, DerefMut};
 use macroquad::prelude::*;
 
 const LOOK_SPEED: f32 = 0.1;
-const MOVE_SPEED: f32 = 0.1;
+const MOVE_SPEED: f32 = 0.2;
 
 const UP: Vec3 = vec3(0.0, 1.0, 0.0);
 
